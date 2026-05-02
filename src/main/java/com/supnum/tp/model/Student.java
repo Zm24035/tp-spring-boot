@@ -1,20 +1,15 @@
 package com.supnum.tp.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.JoinColumn;
 import java.util.ArrayList;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
+@Table(name = "student")
 public class Student {
 
     @Id
@@ -28,6 +23,15 @@ public class Student {
     @Email
     private String email;
 
+    @NotNull
+    @Column(unique = true)
+    private String login;
+
+    @NotNull
+    @Size(min = 4)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private String password;
+
     @ManyToMany
     @JoinTable(
             name = "student_courses",
@@ -36,8 +40,7 @@ public class Student {
     )
     private List<Course> courses = new ArrayList<>();
 
-    public Student() {
-    }
+    public Student() {}
 
     public Long getId() {
         return id;
@@ -61,6 +64,22 @@ public class Student {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getLogin() {
+        return login;
+    }
+
+    public void setLogin(String login) {
+        this.login = login;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public List<Course> getCourses() {

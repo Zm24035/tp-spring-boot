@@ -2,16 +2,16 @@ package com.supnum.tp.controller;
 
 import com.supnum.tp.model.Student;
 import com.supnum.tp.repository.StudentRepository;
-import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.*;
+import com.supnum.tp.repository.CourseRepository;
 import com.supnum.tp.dto.StudentDTO;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import com.supnum.tp.model.Course;
+
+import jakarta.validation.Valid;
+
+import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import com.supnum.tp.model.Course;
-import com.supnum.tp.repository.CourseRepository;
-
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 
@@ -21,11 +21,14 @@ public class StudentController {
 
     private final StudentRepository studentRepository;
     private final CourseRepository courseRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public StudentController(StudentRepository studentRepository,
-                             CourseRepository courseRepository) {
+                             CourseRepository courseRepository,
+                             PasswordEncoder passwordEncoder) {
         this.studentRepository = studentRepository;
         this.courseRepository = courseRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @GetMapping
@@ -35,6 +38,7 @@ public class StudentController {
 
     @PostMapping
     public Student create(@RequestBody @Valid Student student) {
+        student.setPassword(passwordEncoder.encode(student.getPassword()));
         return studentRepository.save(student);
     }
 
@@ -56,6 +60,11 @@ public class StudentController {
 
         student.setName(updatedStudent.getName());
         student.setEmail(updatedStudent.getEmail());
+        student.setLogin(updatedStudent.getLogin());
+
+        if (updatedStudent.getPassword() != null && !updatedStudent.getPassword().isEmpty()) {
+            student.setPassword(passwordEncoder.encode(updatedStudent.getPassword()));
+        }
 
         return studentRepository.save(student);
     }
@@ -79,10 +88,10 @@ public class StudentController {
     public Page<Student> getPaginated(Pageable pageable) {
         return studentRepository.findAll(pageable);
     }
+
     @PostMapping("/{studentId}/courses/{courseId}")
-    public Student assignCourseToStudent(
-            @PathVariable Long studentId,
-            @PathVariable Long courseId) {
+    public Student assignCourseToStudent(@PathVariable Long studentId,
+                                         @PathVariable Long courseId) {
 
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -94,6 +103,7 @@ public class StudentController {
 
         return studentRepository.save(student);
     }
+
     @DeleteMapping("/{studentId}/courses/{courseId}")
     public Student removeCourseFromStudent(@PathVariable Long studentId,
                                            @PathVariable Long courseId) {
@@ -108,14 +118,16 @@ public class StudentController {
 
         return studentRepository.save(student);
     }
+
     @PostMapping("/bulk")
     public List<Student> createManyStudents(@RequestBody List<Student> students) {
+        students.forEach(s -> s.setPassword(passwordEncoder.encode(s.getPassword())));
         return studentRepository.saveAll(students);
     }
+
     @PostMapping("/{studentId}/courses/bulk")
-    public Student addCoursesToStudent(
-            @PathVariable Long studentId,
-            @RequestBody List<Long> courseIds) {
+    public Student addCoursesToStudent(@PathVariable Long studentId,
+                                       @RequestBody List<Long> courseIds) {
 
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -126,6 +138,4 @@ public class StudentController {
 
         return studentRepository.save(student);
     }
-
 }
-
